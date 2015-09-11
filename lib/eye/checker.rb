@@ -24,7 +24,7 @@ class Eye::Checker
 
   param :every, [Fixnum, Float], false, 5
   param :times, [Fixnum, Array], nil, 1
-  param :fires, [Symbol, Array], nil, nil, [:stop, :restart, :unmonitor, :start, :delete, :nothing, :notify]
+  param :fires, [Symbol, Array, Proc], nil, nil, [:stop, :restart, :unmonitor, :start, :delete, :nothing, :notify]
   param :initial_grace, [Fixnum, Float]
   param :skip_initial_fails, [TrueClass, FalseClass]
 
@@ -185,11 +185,16 @@ class Eye::Checker
   end
 
   def fire
-    actions = fires ? Array(fires) : [:restart]
-    process.notify :warn, "Bounded #{check_name}: #{last_human_values} send to #{actions}"
+    if fires.is_a?(Proc)
+      process.notify :warn, "Bounded #{check_name}: #{last_human_values} send to #{fires}"
+      process.schedule(nil, &fires)
+    else
+      actions = fires ? Array(fires) : [:restart]
+      process.notify :warn, "Bounded #{check_name}: #{last_human_values} send to #{actions}"
 
-    actions.each do |action|
-      process.schedule action, Eye::Reason.new("bounded #{check_name}")
+      actions.each do |action|
+        process.schedule action, Eye::Reason.new("bounded #{check_name}")
+      end
     end
   end
 

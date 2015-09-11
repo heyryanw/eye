@@ -1,7 +1,7 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 class Eye::Process
-  attr_reader :test1, :test2, :test3, :test1_call
+  attr_reader :test1, :test2, :test3, :test1_call, :test_block
 
   def scheduler_test1(a)
     sleep 0.3
@@ -193,5 +193,15 @@ describe "Scheduler" do
       sleep 0.1
       @process.test3.should == [7]
     end
+  end
+
+  it "execute block" do
+    @process.schedule(nil) do
+      p 11
+      self.test_block ||= 0
+      self.test_block += 1
+    end
+    sleep 0.05
+    @process.test_block.should == 1
   end
 end

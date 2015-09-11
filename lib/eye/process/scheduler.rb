@@ -8,7 +8,7 @@ module Eye::Process::Scheduler
         return
       end
 
-      unless self.respond_to?(command, true)
+      if command && !self.respond_to?(command, true)
         warn ":#{command} scheduling is unsupported"
         return
       end
@@ -17,7 +17,7 @@ module Eye::Process::Scheduler
         args.pop
       end
 
-      info "schedule :#{command} #{reason ? "(reason: #{reason})" : nil}"
+      info "schedule :#{command || 'block'} #{reason ? "(reason: #{reason})" : nil}"
 
       if reason.class == Eye::Reason
         # for auto reasons
@@ -41,14 +41,18 @@ module Eye::Process::Scheduler
 
   def scheduled_action(command, h = {}, &block)
     reason = h.delete(:reason)
-    info "=> #{command} #{h[:args].present? ? "#{h[:args]*',' }" : nil} #{reason ? "(reason: #{reason})" : nil}"
+    info "=> #{command || 'block'} #{h[:args].present? ? "#{h[:args]*',' }" : nil} #{reason ? "(reason: #{reason})" : nil}"
 
     @current_scheduled_command = command
     @last_scheduled_command = command
     @last_scheduled_reason = reason
     @last_scheduled_at = Time.now
 
-    send(command, *h[:args], &block)
+    if command
+      send(command, *h[:args], &block)
+    else
+      current_actor.instance_exec(&block) if block
+    end
     @current_scheduled_command = nil
     info "<= #{command}"
 

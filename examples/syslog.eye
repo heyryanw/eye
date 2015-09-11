@@ -11,5 +11,6 @@ Eye.app :syslog_test do
     start_command "ruby -e 'loop { p Time.now; sleep 1 }'"
     daemonize!
     stdall syslog
+    check :memory, :every => 1, :times => 5, :below => 10, :fires => -> { p 1 }
   end
 end
