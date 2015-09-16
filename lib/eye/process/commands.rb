@@ -68,7 +68,13 @@ module Eye::Process::Commands
 
     switch :restarting
 
+    unless check_identity
+      clear_pid_file if self[:clear_pid]
+      return true
+    end
+
     if self[:restart_command]
+      check_identity
       execute_restart_command
       sleep_grace(:restart_grace)
       result = process_really_running? || (load_external_pid_file == :ok)

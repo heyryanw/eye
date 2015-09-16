@@ -3,6 +3,7 @@ module Eye::Process::Config
   DEFAULTS = {
     :keep_alive => true, # restart when crashed
     :check_alive_period => 5.seconds,
+    :check_identity_period => 60.seconds,
 
     :start_timeout => 15.seconds,
     :stop_timeout => 10.seconds,
