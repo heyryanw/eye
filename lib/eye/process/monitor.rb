@@ -18,7 +18,7 @@ private
         :bad_identity
       else
         str = "load_external_pid_file: process <#{self.pid}> from pid_file found and already running"
-        str += ", (id: #{id})" if id != :ok
+        str += ", (id: #{res})" if res != :ok
         info str
         :ok
       end
