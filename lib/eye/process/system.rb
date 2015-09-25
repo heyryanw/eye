@@ -45,6 +45,7 @@ module Eye::Process::System
   end
 
   def compare_identity(pid = self.pid)
+    return :ok unless self[:check_identity]
     return :no_pid unless pid
     id = get_identity
     return :no_pid_file unless id

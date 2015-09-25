@@ -62,6 +62,26 @@ describe "check pid identity" do
 
       @process.load_pid_from_file.should == @process.pid
     end
+
+    it "check_identity disabled, identity, process, identity is bad, pid_file is very old" do
+      @process = process(C.p1.merge(:check_identity => false))
+
+      @pid = Eye::System.daemonize(C.p1[:start_command], C.p1)[:pid]
+      File.open(C.p1[:pid_file], 'w'){|f| f.write(@pid) }
+      change_ctime(C.p1[:pid_file], Time.parse('2010-01-01'))
+      @process.get_identity.year.should == 2010
+      @process.compare_identity.should == :ok
+
+      @process.start
+      @process.state_name.should == :up
+      @process.pid.should == @pid
+
+      Eye::System.pid_alive?(@pid).should == true
+
+      @process.compare_identity.should == :ok
+
+      @process.load_pid_from_file.should == @process.pid
+    end
   end
 
   it "process changed identity while running" do
@@ -101,6 +121,24 @@ describe "check pid identity" do
 
     @process.state_name.should == :up
     @process.pid.should == old_pid
+    @process.load_pid_from_file.should == @process.pid
+  end
+
+  it "check_identity disabled, process changed identity while running" do
+    @process = start_ok_process(C.p1.merge(:check_identity_period => 2, :check_identity => false))
+    old_pid = @process.pid
+    @pids << old_pid
+
+    change_ctime(C.p1[:pid_file], 5.days.ago)
+    sleep 5
+
+    # here process should mark as crash, and restart again
+    @process.states_history.states.should == [:unmonitored, :starting, :up]
+
+    @process.state_name.should == :up
+    @process.pid.should == old_pid
+
+    Eye::System.pid_alive?(old_pid).should == true
     @process.load_pid_from_file.should == @process.pid
   end
 
